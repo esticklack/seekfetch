@@ -3,7 +3,7 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { DeepSeekWebClient } from "../core/client.js";
 import { describeError } from "../core/errors.js";
-import { formatFetch, formatResearch, formatSearch } from "../core/format.js";
+import { DEFAULT_SUMMARY_CHARS, formatFetch, formatResearch, formatSearch } from "../core/format.js";
 import { COUNT_DEFAULT, COUNT_MAX, COUNT_MIN, HIGH_QUALITY_SCORE, QUERY_MAX_CHARS } from "../core/limits.js";
 import { buildQuery } from "../core/query.js";
 import { research } from "../core/research.js";
@@ -33,7 +33,7 @@ export function createServer(getClient: () => DeepSeekWebClient): McpServer {
       title: "DeepSeek web search",
       description:
         "Search the live web with DeepSeek's search engine. Returns ranked results with a model-ready summary " +
-        `(600-800 chars) per result. rerank_score ranges 0-3; >= ${HIGH_QUALITY_SCORE} is high quality. ` +
+        `per result (capped at ${DEFAULT_SUMMARY_CHARS} chars by default). rerank_score ranges 0-3; >= ${HIGH_QUALITY_SCORE} is high quality. ` +
         "Use this to discover sources; then call deepseek_fetch on a URL for the full page, or use deepseek_research " +
         `to do both in one step. The query is limited to ${QUERY_MAX_CHARS} characters including filters and supports ` +
         'operators: "exact phrase", -term, -"phrase".',
@@ -45,6 +45,13 @@ export function createServer(getClient: () => DeepSeekWebClient): McpServer {
           .describe("The user's original question, in their words. Improves ranking; trimmed to 128 chars."),
         count: z.number().int().min(COUNT_MIN).max(COUNT_MAX).optional().describe(`Results to return (default ${COUNT_DEFAULT}).`),
         min_score: z.number().min(0).max(3).optional().describe("Drop results below this rerank_score."),
+        summary_chars: z
+          .number()
+          .int()
+          .min(100)
+          .max(10_000)
+          .optional()
+          .describe(`Max characters of each summary (default ${DEFAULT_SUMMARY_CHARS}).`),
         include_content: z
           .boolean()
           .optional()
@@ -70,7 +77,7 @@ export function createServer(getClient: () => DeepSeekWebClient): McpServer {
           need_content: args.include_content ?? false,
         });
         const kept = args.min_score === undefined ? results : results.filter((r) => r.rerank_score >= args.min_score!);
-        return formatSearch(query, kept, { includeContent: args.include_content });
+        return formatSearch(query, kept, { includeContent: args.include_content, maxSummaryChars: args.summary_chars });
       }),
   );
 

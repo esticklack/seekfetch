@@ -110,7 +110,7 @@ On Windows, if your client can't find `npx`, use `"command": "cmd"` with `"args"
 
 | Tool | What it does |
 |---|---|
-| `deepseek_search` | Ranked web results with a ~700-char summary each. Optional filters: `sites`, `exclude_sites`, `lang`, `after`, `before`, `min_score`; `include_content` adds page text. |
+| `deepseek_search` | Ranked web results with a summary each (capped at 800 chars; `summary_chars` to change). Optional filters: `sites`, `exclude_sites`, `lang`, `after`, `before`, `min_score`; `include_content` adds page text. |
 | `deepseek_fetch` | A URL as Markdown. Long pages come in chunks of `max_chars`; continue with `offset`. |
 | `deepseek_research` | Question → top-scoring pages with content and numbered sources, in one call. |
 
@@ -164,6 +164,7 @@ const report = await research(client, { question: "What changed in MCP this year
 As documented by DeepSeek on 2026-10-18; check the [Search & Fetch guide](https://api-docs.deepseek.com/guides/search) for current terms.
 
 - Queries are limited to 128 characters, filters included. `count` is 1–50.
+- Observed in practice: summaries run 1,000–3,500 characters (the docs say 600–800), page content from search is capped around 20,000 characters, and `site:` is a strong preference rather than a strict filter.
 - 5 QPS per account for search, and separately for fetch. Fetch also has a per-domain limit.
 - Billing is per successful request, published at $0.75 per 1,000 for each API. Empty results and errors are not billed.
 

@@ -25,7 +25,7 @@ CLI over DeepSeek's Search (`/v1/tools/search`) and Fetch (`/v1/tools/fetch`) AP
 ## Commands
 
 ```bash
-# Ranked results with ~700-char summaries (no page bodies)
+# Ranked results with summaries capped at 800 chars (no page bodies)
 seekfetch search "rust async runtime comparison" -n 10 --min-score 1.5
 
 # Filters become query operators

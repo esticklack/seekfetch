@@ -62,10 +62,11 @@ withFilters(
     .option("-n, --count <n>", "number of results (1-50)", int)
     .option("-q, --question <text>", "the original question, to improve ranking")
     .option("--min-score <score>", "drop results below this rerank_score (0-3)", float)
+    .option("--summary-chars <n>", "max characters per summary (default 800)", int)
     .option("-c, --content", "include page content")
     .option("--json", "print the raw JSON response")
     .option("-o, --output <file>", "write output to a file instead of stdout"),
-).action(async (words: string[], o: FilterFlags & { count?: number; question?: string; minScore?: number; content?: boolean; json?: boolean; output?: string }) => {
+).action(async (words: string[], o: FilterFlags & { count?: number; question?: string; minScore?: number; summaryChars?: number; content?: boolean; json?: boolean; output?: string }) => {
   const query = buildQuery(words.join(" "), filtersOf(o));
   const res = await clientFromEnv().search({
     query,
@@ -75,7 +76,7 @@ withFilters(
     need_content: o.content ?? false,
   });
   const results = o.minScore === undefined ? res.results : res.results.filter((r) => r.rerank_score >= o.minScore!);
-  await emit(o.json ? JSON.stringify({ query, results }, null, 2) : formatSearch(query, results, { includeContent: o.content }), o.output);
+  await emit(o.json ? JSON.stringify({ query, results }, null, 2) : formatSearch(query, results, { includeContent: o.content, maxSummaryChars: o.summaryChars }), o.output);
 });
 
 program

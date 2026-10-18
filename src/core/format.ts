@@ -26,17 +26,27 @@ export function resultMeta(r: SearchResult): string {
   return bits.join(" · ");
 }
 
+/** Docs say summaries are 600-800 chars; in practice they run 1,000-3,500, so they are capped. */
+export const DEFAULT_SUMMARY_CHARS = 800;
+
+export function clip(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  return `${text.slice(0, maxChars).trimEnd()}…`;
+}
+
 export interface SearchFormatOptions {
   /** Include page content (only present when searched with need_content). */
   includeContent?: boolean;
   maxContentChars?: number;
+  maxSummaryChars?: number;
 }
 
 export function formatSearch(query: string, results: SearchResult[], opts: SearchFormatOptions = {}): string {
   if (!results.length) return `No results for \`${query}\`.`;
   const max = opts.maxContentChars ?? 4000;
+  const maxSummary = opts.maxSummaryChars ?? DEFAULT_SUMMARY_CHARS;
   const blocks = results.map((r, i) => {
-    const lines = [`## ${i + 1}. ${r.title || r.url}`, resultMeta(r), "", r.summary || r.snippet];
+    const lines = [`## ${i + 1}. ${r.title || r.url}`, resultMeta(r), "", clip(r.summary || r.snippet, maxSummary)];
     if (opts.includeContent && r.content) {
       const s = slice(r.content, max);
       lines.push("", "<content>", s.text);
@@ -65,14 +75,16 @@ export function formatResearch(question: string, res: ResearchResult, maxCharsPe
     return head.join("\n");
   }
   const blocks = res.pages.map((p, i) => {
-    const lines = [`## [${i + 1}] ${p.title || p.url}`, resultMeta(p), "", p.summary || p.snippet];
+    const lines = [`## [${i + 1}] ${p.title || p.url}`, resultMeta(p)];
+    // The summary is an excerpt of the content, so it is only shown when there is no content.
     if (p.content) {
       const s = slice(p.content, maxCharsPerPage);
       lines.push("", "<content>", s.text);
       if (s.nextOffset) lines.push(`[truncated at ${maxCharsPerPage} of ${s.total} chars; fetch the URL for the rest]`);
       lines.push("</content>");
-    } else if (p.fetchError) {
-      lines.push("", `(no content: ${p.fetchError})`);
+    } else {
+      lines.push("", clip(p.summary || p.snippet, DEFAULT_SUMMARY_CHARS));
+      if (p.fetchError) lines.push("", `(no content: ${p.fetchError})`);
     }
     return lines.join("\n");
   });

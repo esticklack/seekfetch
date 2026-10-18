@@ -44,10 +44,22 @@ describe("research", () => {
     await expect(research(client, { question: "x".repeat(200) })).rejects.toThrow(/pass a short `query`/);
   });
 
-  it("formats numbered sources", async () => {
-    const { client } = testClient([{ body: { results: [result({ content: "body" })] } }]);
+  it("formats numbered sources and shows the summary only when there is no content", async () => {
+    const { client } = testClient([
+      {
+        body: {
+          results: [
+            result({ url: "https://a.com", content: "body", summary: "SUMMARY-A" }),
+            result({ url: "https://b.com", content: "", summary: "SUMMARY-B" }),
+          ],
+        },
+      },
+      { status: 404, body: { error: { message: "failed to fetch URL" } } },
+    ]);
     const text = formatResearch("q", await research(client, { question: "q" }), 1000);
     expect(text).toContain("## [1] Title");
-    expect(text).toContain("## Sources\n[1] https://example.com/a");
+    expect(text).toContain("## Sources\n[1] https://a.com\n[2] https://b.com");
+    expect(text).not.toContain("SUMMARY-A");
+    expect(text).toContain("SUMMARY-B");
   });
 });
