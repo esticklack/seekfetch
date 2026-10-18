@@ -1,0 +1,67 @@
+{
+  "name": "seekfetch",
+  "version": "0.1.0",
+  "description": "Unofficial MCP server + CLI for the DeepSeek Search & Fetch API: web search and page-to-Markdown for AI agents",
+  "mcpName": "io.github.esticklack/seekfetch",
+  "keywords": [
+    "deepseek",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "web-search",
+    "search-api",
+    "fetch",
+    "web-fetch",
+    "markdown",
+    "ai-agents",
+    "firecrawl-alternative",
+    "cli"
+  ],
+  "homepage": "https://github.com/esticklack/seekfetch#readme",
+  "bugs": {
+    "url": "https://github.com/esticklack/seekfetch/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/esticklack/seekfetch.git"
+  },
+  "license": "MIT",
+  "author": "Estik (https://github.com/esticklack)",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "seekfetch": "dist/cli/index.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "commander": "^15.0.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

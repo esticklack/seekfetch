@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.esticklack/seekfetch",
+  "title": "seekfetch",
+  "description": "Unofficial MCP server for the DeepSeek Search & Fetch API: web search and page-to-Markdown.",
+  "repository": {
+    "url": "https://github.com/esticklack/seekfetch",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "seekfetch",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "mcp"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "DEEPSEEK_API_KEY",
+          "description": "Your DeepSeek API key (platform.deepseek.com)",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}

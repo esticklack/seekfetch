@@ -1,0 +1,31 @@
+# Daily check against the real API, so a breaking change on DeepSeek's side
+# shows up here before users report it. Needs the DEEPSEEK_API_KEY secret;
+# skipped when it is not set (e.g. on forks).
+name: Live API check
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.DEEPSEEK_API_KEY != ''
+      - uses: actions/setup-node@v4
+        if: env.DEEPSEEK_API_KEY != ''
+        with:
+          node-version: 24
+          cache: npm
+      - if: env.DEEPSEEK_API_KEY != ''
+        run: npm ci && npm run build
+      - name: Search
+        if: env.DEEPSEEK_API_KEY != ''
+        run: node dist/cli/index.js search "model context protocol" -n 3 --json | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{const r=JSON.parse(d).results;if(!r.length||!r[0].url)throw new Error("no results");console.log(r.length,"results, top:",r[0].url)})'
+      - name: Fetch
+        if: env.DEEPSEEK_API_KEY != ''
+        run: node dist/cli/index.js fetch https://example.com --json | node -e 'let d="";process.stdin.on("data",c=>d+=c).on("end",()=>{const p=JSON.parse(d);if(!p.content)throw new Error("empty content");console.log("fetched",p.content.length,"chars")})'
