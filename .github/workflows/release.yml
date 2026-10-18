@@ -1,0 +1,52 @@
+# Publishes to npm and the MCP Registry when a version tag (v1.2.3) is pushed.
+# Both use OIDC: npm through trusted publishing (configure it once on npmjs.com
+# for this repo and workflow), the registry through `login github-oidc`.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Check tag matches package.json
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          test "$VERSION" = "$(node -p 'require("./package.json").version')" \
+            || { echo "Tag $GITHUB_REF_NAME does not match package.json version"; exit 1; }
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
+      - name: Publish to npm
+        run: |
+          if npm view "seekfetch@$VERSION" version >/dev/null 2>&1; then
+            echo "seekfetch@$VERSION is already on npm, skipping"
+          else
+            npm install -g npm@latest   # trusted publishing needs npm >= 11.5.1
+            npm publish --access public --provenance
+          fi
+
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+
+      - name: Publish to MCP Registry
+        run: |
+          jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json > server.tmp && mv server.tmp server.json
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish
